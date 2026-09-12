@@ -21,6 +21,11 @@ export default function Home() {
   const [selectedCityName, setSelectedCityName] = useState<string | null>("Delhi");
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [timeString, setTimeString] = useState('');
+
+  useEffect(() => {
+    setTimeString(lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+  }, [lastRefreshed]);
 
   const loadData = useCallback(async () => {
     setIsRefreshing(true);
@@ -99,7 +104,7 @@ export default function Home() {
         <div className="flex items-center gap-3 w-full sm:w-auto justify-end text-xs">
           <div className="hidden sm:flex items-center gap-2 text-zinc-400 bg-zinc-800/60 px-3 py-1.5 rounded-lg border border-white/5">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Updated: {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
+            <span>Updated: {timeString}</span>
           </div>
 
           <button

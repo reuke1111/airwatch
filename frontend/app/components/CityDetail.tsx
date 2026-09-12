@@ -387,7 +387,7 @@ export default function CityDetail({ city, onClose }: CityDetailProps) {
                 d="M4 12a8 8 0 018-8v8H4z"
               />
             </svg>
-            <span>Consulting Claude for personalized health tips...</span>
+            <span>Consulting Gemini for personalized health tips...</span>
           </div>
         )}
 
@@ -403,7 +403,7 @@ export default function CityDetail({ city, onClose }: CityDetailProps) {
             <div className="font-bold text-emerald-400 flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                Claude AI Health Advisor
+                Gemini AI Health Advisor
               </div>
               <span className="text-[10px] font-normal text-emerald-400/80 bg-emerald-900/40 px-2 py-0.5 rounded border border-emerald-500/20">
                 Live AI Advice
