@@ -21,10 +21,15 @@ interface CityDetailProps {
 export default function CityDetail({ city, onClose }: CityDetailProps) {
   const [forecast, setForecast] = useState<ForecastResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [showAiTips, setShowAiTips] = useState<boolean>(false);
+  const [aiTips, setAiTips] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState<boolean>(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
+    setAiTips(null);
+    setAiError(null);
+    setAiLoading(false);
 
     fetchCityForecast(city.city)
       .then((data) => {
@@ -44,6 +49,40 @@ export default function CityDetail({ city, onClose }: CityDetailProps) {
       isMounted = false;
     };
   }, [city.city]);
+
+  const handleGetAiTips = async () => {
+    if (aiLoading) return;
+    setAiLoading(true);
+    setAiError(null);
+
+    try {
+      const response = await fetch("/api/health-tips", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          city: city.city,
+          aqi: city.aqi,
+          predicted_aqi: forecast?.predicted_aqi ?? city.predicted_aqi,
+          dominant_pollutant: city.dominant_pollutant ?? "PM2.5",
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `Request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      setAiTips(data.tips);
+    } catch (err: any) {
+      console.error("Failed to fetch AI health tips:", err);
+      setAiError(err.message || "Failed to load health tips. Please try again.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const currentTheme = getAqiTheme(city.aqi);
   const predictedTheme = getAqiTheme(forecast?.predicted_aqi ?? city.predicted_aqi);
@@ -280,59 +319,100 @@ export default function CityDetail({ city, onClose }: CityDetailProps) {
         )}
       </div>
 
-      {/* "Get AI Health Tips" Button & Expandable Advice */}
+      {/* "Get AI Health Tips" Button & AI Health Tips Display */}
       <div className="mt-auto pt-2">
         <button
-          onClick={() => setShowAiTips(!showAiTips)}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-zinc-950 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer active:scale-[0.99]"
+          onClick={handleGetAiTips}
+          disabled={aiLoading}
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-zinc-950 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-75 disabled:cursor-not-allowed"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-            />
-          </svg>
-          <span>{showAiTips ? "Hide AI Health Tips" : "Get AI Health Tips"}</span>
+          {aiLoading ? (
+            <>
+              <svg
+                className="w-4 h-4 animate-spin text-zinc-950"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8H4z"
+                />
+              </svg>
+              <span>Getting AI Health Tips...</span>
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                />
+              </svg>
+              <span>{aiTips ? "Refresh AI Health Tips" : "Get AI Health Tips"}</span>
+            </>
+          )}
         </button>
 
-        {showAiTips && (
+        {aiLoading && (
+          <div className="mt-3 p-4 rounded-2xl bg-zinc-800/40 border border-emerald-500/20 text-xs text-zinc-300 flex items-center justify-center gap-2.5 animate-pulse">
+            <svg
+              className="w-4 h-4 animate-spin text-emerald-400"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8H4z"
+              />
+            </svg>
+            <span>Consulting Claude for personalized health tips...</span>
+          </div>
+        )}
+
+        {aiError && (
+          <div className="mt-3 p-3 rounded-xl bg-red-950/40 border border-red-500/30 text-xs text-red-300">
+            <p className="font-semibold text-red-400">Unable to load health tips</p>
+            <p className="mt-1 text-[11px] text-red-200/80">{aiError}</p>
+          </div>
+        )}
+
+        {aiTips && (
           <div className="mt-3 p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 text-xs text-zinc-200 flex flex-col gap-2.5 animate-fadeIn">
-            <div className="font-bold text-emerald-400 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              AirWatch AI Assistant Advisory
+            <div className="font-bold text-emerald-400 flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                Claude AI Health Advisor
+              </div>
+              <span className="text-[10px] font-normal text-emerald-400/80 bg-emerald-900/40 px-2 py-0.5 rounded border border-emerald-500/20">
+                Live AI Advice
+              </span>
             </div>
 
-            <ul className="space-y-2 text-zinc-300">
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-400 font-bold">•</span>
-                <span>
-                  <strong>Mask Guidance:</strong>{" "}
-                  {(city.aqi ?? 0) > 100
-                    ? "Wearing an N95 or KN95 particulate respirator is strongly advised when outdoors."
-                    : "Standard outdoor activities are safe without specialized respirators."}
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-400 font-bold">•</span>
-                <span>
-                  <strong>Indoor Air:</strong>{" "}
-                  {(city.aqi ?? 0) > 100
-                    ? "Run HEPA air purifiers and seal gaps in windows to minimize PM2.5 infiltration."
-                    : "Good time for natural window ventilation during early morning hours."}
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-400 font-bold">•</span>
-                <span>
-                  <strong>Vulnerable Populations:</strong> Asthmatics, seniors, and children should
-                  {(city.aqi ?? 0) > 100
-                    ? " remain indoors and carry rescue inhalers if traveling."
-                    : " maintain routine active lifestyles."}
-                </span>
-              </li>
-            </ul>
+            <p className="text-zinc-300 whitespace-pre-line leading-relaxed text-xs">
+              {aiTips}
+            </p>
           </div>
         )}
       </div>
