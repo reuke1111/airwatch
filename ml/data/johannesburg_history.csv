@@ -1,0 +1,9 @@
+date,city,pm25_avg,pm25_max,pm25_min,pm10_avg,pm10_max,pm10_min,aqi
+2026-09-11,Johannesburg,146,181,95,90,129,50,146
+2026-09-12,Johannesburg,125,179,105,65,121,53,125
+2026-09-13,Johannesburg,111,131,92,66,84,45,67
+2026-09-14,Johannesburg,55,122,42,29,77,22,55
+2026-09-15,Johannesburg,43,60,21,28,48,13,43
+2026-09-16,Johannesburg,89,152,63,63,79,36,89
+2026-09-17,Johannesburg,50,104,34,29,74,18,50
+2026-09-18,Johannesburg,30,32,24,18,18,13,30
